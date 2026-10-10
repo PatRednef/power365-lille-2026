@@ -1,0 +1,142 @@
+createOrReplace
+
+	/// Carte KPI en SVG pour un visuel Image : titre, valeur, écart à la référence (flèche et pourcentage) et deux barres comparées.
+	/// Sans référence : si objectif est renseigné (0,2 = +20 %), la barre montre la valeur actuelle, un drapeau, puis ce que représente l'objectif ; sinon aucune barre.
+	/// Icône en haut à droite : coupe à +10 % ou plus, tendance en hausse, alerte en baisse, cible sans référence.
+	/// Couleur au format #RRGGBB. La fonction encode elle-même le % et le # de l'URI de données : rien d'autre à installer.
+	function 'BED.KpiSvg' =
+			(titre : STRING, valeur : NUMERIC, reference : NUMERIC, couleur : STRING, objectif : NUMERIC) =>
+			    VAR _Titre =
+			        SUBSTITUTE (
+			            SUBSTITUTE (
+			                SUBSTITUTE ( UPPER ( titre ), "&", "&amp;" ),
+			                "<",
+			                "&lt;"
+			            ),
+			            "'",
+			            "’"
+			        )
+			    VAR _SansRef =
+			        ISBLANK ( reference ) || reference = 0
+			    VAR _ModeObjectif =
+			        _SansRef && objectif > 0
+			    VAR _Delta = valeur - reference
+			    VAR _Pct =
+			        DIVIDE ( _Delta, ABS ( reference ) )
+			    VAR _Hausse = _Delta >= 0
+			    VAR _Excellent =
+			        NOT _SansRef && _Pct >= 0.1
+			    VAR _CouleurDelta =
+			        IF (
+			            _SansRef,
+			            "#9A9AB0",
+			            IF ( _Hausse, "#3DDC84", "#FF4B3E" )
+			        )
+			    VAR _Fleche =
+			        IF ( _Hausse, "5,0 10,9 0,9", "0,0 10,0 5,9" )
+			    VAR _FormatValeur =
+			        IF ( valeur = INT ( valeur ), "#,##0", "#,##0.0" )
+			    VAR _TexteObjectif =
+			        FORMAT ( objectif, "+0%;-0%" )
+			    VAR _Mention =
+			        SWITCH (
+			            TRUE (),
+			            _ModeObjectif, "Objectif : " & _TexteObjectif,
+			            _SansRef, "Pas de référence",
+			            FORMAT ( _Pct, "+0.0%;-0.0%" ) & " vs référence"
+			        )
+			    VAR _XMention =
+			        IF ( _SansRef, 28, 46 )
+			    VAR _CouleurIcone =
+			        SWITCH (
+			            TRUE (),
+			            _SansRef, couleur,
+			            _Excellent, "#F0C83C",
+			            _Hausse, "#3DDC84",
+			            "#FF4B3E"
+			        )
+			    VAR _TraceIcone =
+			        SWITCH (
+			            TRUE (),
+			            _SansRef, "<circle cx='12' cy='12' r='9'/><circle cx='12' cy='12' r='5'/><circle cx='12' cy='12' r='1'/>",
+			            _Excellent, "<path d='M7 4h10v4a5 5 0 0 1-10 0V4z'/><path d='M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3'/><path d='M12 13v4M10 17h4v3h-4zM8 20h8'/>",
+			            _Hausse, "<path d='M3 17l6-6 4 4 8-8'/><path d='M15 7h6v6'/>",
+			            "<path d='M12 3.5l9.5 16.5h-19z'/><path d='M12 10v4.5'/><path d='M12 17.2h.01'/>"
+			        )
+			    VAR _Icone =
+			        IF (
+			            _SansRef && NOT _ModeObjectif,
+			            "",
+			            "<g transform='translate(334 16) scale(1.4)'><circle cx='12' cy='12' r='15' fill='" & _CouleurIcone & "' opacity='.12'/><g fill='none' stroke='" & _CouleurIcone & "' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'>" & _TraceIcone & "</g></g>"
+			        )
+			    VAR _Fleche_Svg =
+			        IF (
+			            _SansRef,
+			            "",
+			            "<g transform='translate(28 126)' fill='" & _CouleurDelta & "'><polygon points='" & _Fleche & "'/></g>"
+			        )
+			    VAR _Echelle =
+			        MAX ( valeur, reference )
+			    VAR _LargeurValeur =
+			        INT ( 332 * DIVIDE ( MAX ( valeur, 0 ), _Echelle, 0 ) )
+			    VAR _LargeurRef =
+			        INT ( 332 * DIVIDE ( MAX ( reference, 0 ), _Echelle, 0 ) )
+			    VAR _LargeurActuel =
+			        INT ( 332 / ( 1 + MAX ( objectif, 0 ) ) )
+			    VAR _XSep = 28 + _LargeurActuel
+			    VAR _Etiquette =
+			        "<text x='28' y='176' font-family='Segoe UI,sans-serif' font-size='10' letter-spacing='1.5' fill='#9A9AB0'>VALEUR</text>" &
+			        "<rect x='28' y='182' width='332' height='6' rx='3' fill='#2A2A38'/>"
+			    VAR _Barres =
+			        SWITCH (
+			            TRUE (),
+			            _ModeObjectif,
+			                _Etiquette &
+			                "<rect x='" & _XSep & "' y='182' width='" & ( 332 - _LargeurActuel ) & "' height='6' rx='3' fill='" & couleur & "' opacity='.35'/>" &
+			                "<rect x='28' y='182' width='" & _LargeurActuel & "' height='6' rx='3' fill='" & couleur & "'/>" &
+			                "<rect x='" & ( _XSep - 2 ) & "' y='177' width='4' height='16' rx='2' fill='#FFFFFF'/>" &
+			                "<g transform='translate(" & ( _XSep - 4 ) & " 156) scale(1)' fill='" & couleur & "' stroke='#FFFFFF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 22V3'/><path d='M4 3h13l-3.5 4.5L17 12H4z'/></g>" &
+			                "<text x='28' y='208' font-family='Segoe UI,sans-serif' font-size='10' letter-spacing='1.5' fill='#9A9AB0'>ACTUEL</text>" &
+			                "<text x='360' y='208' text-anchor='end' font-family='Segoe UI,sans-serif' font-size='13' font-weight='700' fill='" & couleur & "'>" & _TexteObjectif & " = " & FORMAT ( valeur * ( 1 + objectif ), _FormatValeur ) & "</text>",
+			            _SansRef, "",
+			            _Etiquette &
+			                "<rect x='28' y='182' width='" & _LargeurValeur & "' height='6' rx='3' fill='" & couleur & "'/>" &
+			                "<text x='28' y='206' font-family='Segoe UI,sans-serif' font-size='10' letter-spacing='1.5' fill='#9A9AB0'>RÉFÉRENCE</text>" &
+			                "<rect x='28' y='212' width='332' height='6' rx='3' fill='#2A2A38'/><rect x='28' y='212' width='" & _LargeurRef & "' height='6' rx='3' fill='#6B6B80'/>"
+			        )
+			    VAR _Svg =
+			        "<svg xmlns='http://www.w3.org/2000/svg' width='388' height='240' viewBox='0 0 388 240'>" &
+			        "<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#1D1D29'/><stop offset='1' stop-color='#0E0E15'/></linearGradient>" &
+			        "<clipPath id='c'><rect width='388' height='240' rx='18'/></clipPath></defs>" &
+			        "<g clip-path='url(#c)'><rect width='388' height='240' fill='url(#g)'/><rect width='8' height='240' fill='" &
+			        couleur &
+			        "'/></g>" &
+			        "<rect x='.5' y='.5' width='387' height='239' rx='18' fill='none' stroke='#2C2C3B'/>" &
+			        "<text x='28' y='38' font-family='Segoe UI,sans-serif' font-size='12' font-weight='700' letter-spacing='2' fill='#9A9AB0'>" &
+			        _Titre &
+			        "</text>" &
+			        _Icone &
+			        "<text x='26' y='106' font-family='Segoe UI,sans-serif' font-size='56' font-weight='800' fill='#FFFFFF'>" &
+			        FORMAT ( valeur, _FormatValeur ) &
+			        "</text>" &
+			        _Fleche_Svg &
+			        "<text x='" &
+			        _XMention &
+			        "' y='136' font-family='Segoe UI,sans-serif' font-size='15' font-weight='700' fill='" &
+			        _CouleurDelta &
+			        "'>" &
+			        _Mention &
+			        "</text>" &
+			        _Barres &
+			        "</svg>"
+			    RETURN
+			        IF (
+			            ISBLANK ( valeur ),
+			            BLANK (),
+			            "data:image/svg+xml;utf8," &
+			                SUBSTITUTE (
+			                    SUBSTITUTE ( _Svg, "%", "%25" ),
+			                    "#",
+			                    "%23"
+			                )
+			        )

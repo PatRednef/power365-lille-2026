@@ -1,0 +1,37 @@
+// Exemples d'appel des trois fonctions BED. Adaptez les noms de tables et de mesures à votre modèle.
+
+// 1. Garde-fou : un ✔ ou un ✘ à côté d'un total sensible
+Contrôle podiums =
+BED.Controle (
+    [Podiums],
+    DISTINCTCOUNT ( Manches[CleManche] ) * 3
+)
+
+// 2. Titre vivant : le filtre actif dit en clair (à brancher sur le titre d'un visuel)
+Titre écuries =
+"Points · "
+    & BED.ListeFiltre (
+        Ecuries[Ecurie],
+        2,
+        "Toutes les écuries"
+    )
+
+// 3. Carte KPI en SVG (mesure à poser dans un visuel Image, catégorie « URL de l'image »)
+KPI points =
+BED.KpiSvg (
+    "Points",
+    [Points],
+    [Points N-1],
+    "#E10600",
+    BLANK ()
+)
+
+// 3 bis. Sans référence : un objectif de +20 % (0,2) donne une barre avec drapeau
+KPI clients =
+BED.KpiSvg (
+    "Clients",
+    [Clients],
+    BLANK (),
+    "#85BD31",
+    0.2
+)
