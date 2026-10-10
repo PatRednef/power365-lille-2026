@@ -1,0 +1,75 @@
+createOrReplace
+
+	/// Bouton de navigation en SVG pour un visuel Image : pastille ronde avec flèche animée, ombre colorée et reflet.
+	/// plein = 1 : pastille pleine de la couleur ; plein = 0 : pastille sombre cerclée de la couleur. sens = 0 : flèche vers la droite ; 1 : retour, flèche vers la gauche ; 2 : lien externe, flèche en diagonale.
+	/// À poser dans un visuel Image (catégorie « URL de l'image »), puis Format, Action, Navigation de page. Couleur au format #RRGGBB, libellé de 13 caractères au plus.
+	function 'BED.BoutonSvg' =
+			(libelle : STRING, couleur : STRING, plein : INT64, sens : INT64) =>
+			    VAR _Texte =
+			        SUBSTITUTE (
+			            SUBSTITUTE (
+			                SUBSTITUTE ( libelle, "&", "&amp;" ),
+			                "<",
+			                "&lt;"
+			            ),
+			            "'",
+			            "’"
+			        )
+			    VAR _Plein = plein = 1
+			    VAR _Retour = sens = 1
+			    VAR _Externe = sens = 2
+			    VAR _CxPastille =
+			        IF ( _Retour, 44, 256 )
+			    VAR _CxTexte =
+			        IF ( _Retour, 183, 117 )
+			    VAR _CouleurPastille =
+			        IF ( _Plein, "#0E0F10", couleur )
+			    VAR _CouleurTexte =
+			        IF ( _Plein, "#0E0F10", "#FFFFFF" )
+			    VAR _CouleurFleche =
+			        IF ( _Plein, couleur, "#0E0F10" )
+			    VAR _CouleurAnneau =
+			        IF ( _Plein, "#0E0F10", couleur )
+			    VAR _TraceFleche =
+			        SWITCH (
+			            TRUE (),
+			            _Retour, "M9 0H-9M-2 -7L-9 0L-2 7",
+			            _Externe, "M-6 6L6 -6M-3 -6H6V3",
+			            "M-9 0H9M2 -7L9 0L2 7"
+			        )
+			    VAR _Glissement =
+			        SWITCH (
+			            TRUE (),
+			            _Retour, "0 0;-4 0;0 0",
+			            _Externe, "0 0;3 -3;0 0",
+			            "0 0;4 0;0 0"
+			        )
+			    VAR _Corps =
+			        IF (
+			            _Plein,
+			            "<rect x='6' y='4' width='288' height='76' rx='38' fill='" & couleur & "'/><rect x='6' y='4' width='288' height='76' rx='38' fill='url(#b)'/>",
+			            "<rect x='7' y='5' width='286' height='74' rx='37' fill='url(#v)' stroke='" & couleur & "' stroke-width='2.5'/><rect x='7' y='5' width='286' height='36' rx='18' fill='url(#b)' opacity='.25'/>"
+			        )
+			    VAR _Svg =
+			        "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='92' viewBox='0 0 300 92'>" &
+			        "<defs><linearGradient id='v' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2A2A38'/><stop offset='1' stop-color='#11111A'/></linearGradient>" &
+			        "<linearGradient id='b' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#FFFFFF' stop-opacity='.38'/><stop offset='.55' stop-color='#FFFFFF' stop-opacity='0'/></linearGradient>" &
+			        "<filter id='o' x='-10%' y='-25%' width='120%' height='170%'><feDropShadow dx='0' dy='4' stdDeviation='4.5' flood-color='" & couleur & "' flood-opacity='.4'/></filter></defs>" &
+			        "<g filter='url(#o)'>" & _Corps & "</g>" &
+			        "<g transform='translate(" & _CxPastille & " 42)'>" &
+			        "<circle r='28' fill='" & _CouleurPastille & "'/>" &
+			        "<circle r='28' fill='none' stroke='" & _CouleurAnneau & "' stroke-width='2'><animate attributeName='r' values='28;37' dur='1.8s' repeatCount='indefinite'/><animate attributeName='opacity' values='.7;0' dur='1.8s' repeatCount='indefinite'/></circle>" &
+			        "<g fill='none' stroke='" & _CouleurFleche & "' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'><g><animateTransform attributeName='transform' type='translate' values='" & _Glissement & "' dur='1.8s' repeatCount='indefinite'/><path d='" & _TraceFleche & "'/></g></g></g>" &
+			        "<text x='" & _CxTexte & "' y='51' text-anchor='middle' font-family='Segoe UI,sans-serif' font-size='25' font-weight='700' fill='" & _CouleurTexte & "'>" & _Texte & "</text>" &
+			        "</svg>"
+			    RETURN
+			        IF (
+			            ISBLANK ( libelle ),
+			            BLANK (),
+			            "data:image/svg+xml;utf8," &
+			                SUBSTITUTE (
+			                    SUBSTITUTE ( _Svg, "%", "%25" ),
+			                    "#",
+			                    "%23"
+			                )
+			        )

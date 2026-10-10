@@ -35,3 +35,11 @@ BED.KpiSvg (
     "#85BD31",
     0.2
 )
+
+// 4. Bouton de navigation en SVG (visuel Image, puis Format, Action, Navigation de page)
+// sens : 0 = suivant, 1 = retour, 2 = lien externe ; plein : 1 = pastille pleine, 0 = pastille sombre
+Bouton Accueil =
+BED.BoutonSvg ( "Accueil", "#20ACE3", 0, 1 )
+
+Bouton LinkedIn =
+BED.BoutonSvg ( "Mon LinkedIn", "#20ACE3", 1, 2 )

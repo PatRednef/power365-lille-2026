@@ -1,0 +1,75 @@
+createOrReplace
+
+	table Ventes
+		column Region
+			dataType: string
+			summarizeBy: none
+			sourceColumn: [Region]
+
+			annotation SummarizationSetBy = Automatic
+
+		column CAkEUR
+			dataType: int64
+			formatString: 0
+			summarizeBy: sum
+			sourceColumn: [CAkEUR]
+
+			annotation SummarizationSetBy = Automatic
+
+		column CAkEUR_N1
+			dataType: int64
+			formatString: 0
+			summarizeBy: sum
+			sourceColumn: [CAkEUR_N1]
+
+			annotation SummarizationSetBy = Automatic
+
+		column NbCmd
+			dataType: int64
+			formatString: 0
+			summarizeBy: sum
+			sourceColumn: [NbCmd]
+
+			annotation SummarizationSetBy = Automatic
+
+		column NbCmd_N1
+			dataType: int64
+			formatString: 0
+			summarizeBy: sum
+			sourceColumn: [NbCmd_N1]
+
+			annotation SummarizationSetBy = Automatic
+
+		column NbNouveauxClients
+			dataType: int64
+			formatString: 0
+			summarizeBy: sum
+			sourceColumn: [NbNouveauxClients]
+
+			annotation SummarizationSetBy = Automatic
+
+		/// Chiffre d'affaires de la période, en k€.
+		measure CA = SUM ( Ventes[CAkEUR] )
+			formatString: #,##0
+			displayFolder: 01 Base
+
+		/// Chiffre d'affaires de la période de référence, en k€.
+		measure 'CA N-1' = SUM ( Ventes[CAkEUR_N1] )
+			formatString: #,##0
+			displayFolder: 01 Base
+
+		measure Commandes = SUM ( Ventes[NbCmd] )
+			formatString: #,##0
+			displayFolder: 01 Base
+
+		measure 'Commandes N-1' = SUM ( Ventes[NbCmd_N1] )
+			formatString: #,##0
+			displayFolder: 01 Base
+
+		measure 'Nouveaux clients' = SUM ( Ventes[NbNouveauxClients] )
+			formatString: #,##0
+			displayFolder: 01 Base
+
+		partition Ventes = calculated
+			mode: import
+			source = DATATABLE ( "Region", STRING, "CAkEUR", INTEGER, "CAkEUR_N1", INTEGER, "NbCmd", INTEGER, "NbCmd_N1", INTEGER, "NbNouveauxClients", INTEGER, { { "Nord", 1240, 1105, 3480, 3650, 214 }, { "Île-de-France", 2860, 3010, 7950, 8900, 389 }, { "Ouest", 980, 905, 2760, 2900, 131 }, { "Sud", 1530, 1412, 4260, 4320, 176 } } )
